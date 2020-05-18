@@ -1,5 +1,6 @@
 import main.Du
 import main.getSize
+import main.getSizes
 import main.unit
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -19,6 +20,14 @@ internal class DuTest {
         assertEquals(getSize("0"), null)
         assertEquals(getSize("src/test/resources/Files/align_in1.txt"), 2577)
         assertEquals(getSize("src/test/resources/Files"), 3335)
+    }
+
+    @Test
+    fun totalSizeTest() {
+        assertEquals(getSizes(listOf("0")), 0)
+        assertEquals(getSizes(listOf("src/test/resources/Files/align_in1.txt")), 2577)
+        assertEquals(getSizes(listOf("src/test/resources/Files")), 3335)
+        assertEquals(getSizes(listOf("src/test/resources/Files", "src/test/resources/Files/align_in1.txt")), 5912)
     }
 
     @Test

@@ -5,6 +5,7 @@ import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
 import java.io.File
+import kotlin.system.exitProcess
 
 
 fun main(arguments: Array<String>) = Du().sizeDu(arguments)
@@ -29,35 +30,24 @@ class Du {
             parser.parseArgument(*arguments)
         } catch (e: CmdLineException) {
             println("Error!")
-            return
+            exitProcess(1)
         }
 
+        if (files.any { !File(it).exists() }) exitProcess(1)
+
         val base = if (si) 1000 else 1024
-        val list = files.map { Pair(File(it).name, getSize(it)) }
 
         if (c) {
-            var sum = 0L
-            for (it in list.filter { it.second != null }) {
-                sum += it.second!!
-            }
-
-            if (list.any { it.second == -1L })
-                println("Files ${list.filter { it.second == -1L }.joinToString(", ") { it.first }} don't exist")
-            else {
-                if (h) println("Files ${list.joinToString(", ") { it.first }}: ${unit(sum, base)}")
-                else println("Files ${list.joinToString(", ") { it.first }}: $sum")
-            }
+            if (h) println("Total size: ${unit(getSizes(files)!!, base)}")
+            else println("Total size: ${getSizes(files)!! / base}")
         } else {
-            for (it in list) {
-                if (it.second == null) println("File ${it.first} doesn't exist ")
-                else if (h) println("File ${it.first}: ${unit(it.second!!, base)}")
-                else println("File ${it.first}: ${it.second}")
-
+            for (it in files) {
+                if (h) println("File ${File(it).name}: ${unit(getSize(it)!!, base)}")
+                else println("File ${File(it).name}: ${getSize(it)!! / base}")
             }
         }
     }
 }
-
 
 fun unit(size: Long, si: Int): String {
     val byte = listOf("B", "KB", "MB", "GB")
@@ -73,8 +63,19 @@ fun unit(size: Long, si: Int): String {
 fun getSize(name: String): Long? {
     val file = File(name)
     return when {
-        file.exists() && file.isDirectory -> file.walk().toList().filter { !it.isDirectory }.map { it.length() }.sum()
+        file.exists() && file.isDirectory -> file.walk().filter { !it.isDirectory }.map { it.length() }.sum()
         file.exists() && !file.isDirectory -> file.length()
         else -> null
     }
 }
+
+fun getSizes(list: List<String>): Long? {
+    val files = list.map {getSize(it) }
+    var sum = 0L
+    for (it in files.filterNotNull()) {
+        sum += it
+    }
+    return sum
+}
+
+
